@@ -29,6 +29,8 @@
 
 #undef BOOL
 
+#define FRAMES_TO_KEEP_TOUCHSCREEN_DOWN_FOR 6
+
 #define SNDCORE_DELTA 1
 
 void DLTAUpdateAudio(s16 *buffer, u32 num_samples);
@@ -69,6 +71,8 @@ SoundInterface_struct *SNDCoreList[] = {
 
 @property (nonatomic) uint32_t activatedInputs;
 @property (nonatomic) CGPoint touchScreenPoint;
+
+@property (nonatomic) int touchScreenActivatedSinceGameLoop;
 
 @end
 
@@ -213,6 +217,13 @@ SoundInterface_struct *SNDCoreList[] = {
         NDS_releaseTouch();
     }
     
+    if (self.touchScreenActivatedSinceGameLoop > 0) {
+        self.touchScreenActivatedSinceGameLoop--;
+        if (self.touchScreenActivatedSinceGameLoop == 0) {
+            self.activatedInputs &= ~(DSGameInputTouchScreenX | DSGameInputTouchScreenY);
+        }
+    }
+
     NDS_beginProcessingInput();
     NDS_endProcessingInput();
     
@@ -253,11 +264,16 @@ SoundInterface_struct *SNDCoreList[] = {
     default: break;
     }
 
+    self.touchScreenActivatedSinceGameLoop = FRAMES_TO_KEEP_TOUCHSCREEN_DOWN_FOR;
     self.touchScreenPoint = touchPoint;
 }
 
 - (void)deactivateInput:(NSInteger)input
-{    
+{
+    if (self.touchScreenActivatedSinceGameLoop > 0) {
+        return;
+    }
+    
     self.activatedInputs &= ~((uint32_t)input);
     
     CGPoint touchPoint = self.touchScreenPoint;
