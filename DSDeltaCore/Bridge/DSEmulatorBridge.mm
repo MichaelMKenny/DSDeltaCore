@@ -264,14 +264,18 @@ SoundInterface_struct *SNDCoreList[] = {
     default: break;
     }
 
-    self.touchScreenActivatedSinceGameLoop = FRAMES_TO_KEEP_TOUCHSCREEN_DOWN_FOR;
+    if ((DSGameInput)input == DSGameInputTouchScreenX || (DSGameInput)input == DSGameInputTouchScreenY) {
+        self.touchScreenActivatedSinceGameLoop = FRAMES_TO_KEEP_TOUCHSCREEN_DOWN_FOR;
+    }
     self.touchScreenPoint = touchPoint;
 }
 
 - (void)deactivateInput:(NSInteger)input
 {
-    if (self.touchScreenActivatedSinceGameLoop > 0) {
-        return;
+    if ((DSGameInput)input == DSGameInputTouchScreenX || (DSGameInput)input == DSGameInputTouchScreenY) {
+        if (self.touchScreenActivatedSinceGameLoop > 0) {
+            return;
+        }
     }
     
     self.activatedInputs &= ~((uint32_t)input);
